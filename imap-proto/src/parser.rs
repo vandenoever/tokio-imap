@@ -4,6 +4,7 @@
 
 use nom::{self, IResult};
 
+use std::borrow::Cow;
 use std::str;
 
 use types::*;
@@ -126,8 +127,20 @@ named!(astring<&[u8]>, alt!(
     string
 ));
 
-named!(mailbox<&str>, alt!(
-    map_res!(astring, str::from_utf8)
+named!(mailbox<Cow<str>>, map!(
+    map_res!(astring, str::from_utf8),
+    |s| {
+        if s.len() == 5 {
+            let up = s.to_uppercase();
+            if up == "INBOX" {
+                Cow::Owned(up)
+            } else {
+                Cow::Borrowed(s)
+            }
+        } else {
+            Cow::Borrowed(s)
+        }
+    }
 ));
 
 named!(flag_extension<&str>, map_res!(
@@ -770,9 +783,9 @@ mod tests {
 
     #[test]
     fn test_list() {
-        match ::parser::mailbox(b"INBOX.Tests") {
+        match ::parser::mailbox(b"iNboX") {
             IResult::Done(_, mb) => {
-                assert_eq!(mb, "INBOX.Tests");
+                assert_eq!(mb, "INBOX");
             },
             rsp @ _ => panic!("unexpected response {:?}", rsp),
         }

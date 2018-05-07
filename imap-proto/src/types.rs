@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 #[derive(Debug, Eq, PartialEq)]
 pub struct Request(pub RequestId, pub Vec<u8>);
 
@@ -71,16 +73,16 @@ pub enum MailboxDatum<'a> {
     List {
         flags: Vec<&'a str>,
         delimiter: &'a str,
-        name: &'a str,
+        name: Cow<'a, str>,
     },
     Status {
-        mailbox: &'a str,
+        mailbox: Cow<'a, str>,
         status: Vec<StatusAttribute>,
     },
     SubList {
         flags: Vec<&'a str>,
         delimiter: &'a str,
-        name: &'a str,
+        name: Cow<'a, str>,
     },
     Recent(u32),
 }
