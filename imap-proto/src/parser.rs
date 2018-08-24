@@ -522,6 +522,7 @@ named!(msg_att_rfc822<AttributeValue>, do_parse!(
 
 named!(msg_att_rfc822_header<AttributeValue>, do_parse!(
     tag_s!("RFC822.HEADER ") >>
+    opt!(tag_s!(" ")) >> // extra space workaround for DavMail
     raw: nstring >>
     (AttributeValue::Rfc822Header(raw))
 ));
@@ -765,6 +766,15 @@ mod tests {
     fn test_uid_fetch() {
         match parse_response(b"* 4 FETCH (UID 71372 RFC822.HEADER {10275}\r\n") {
             IResult::Incomplete(nom::Needed::Size(10319)) => {},
+            rsp => panic!("unexpected response {:?}", rsp),
+        }
+    }
+
+    #[test]
+    fn test_uid_fetch_extra_space() {
+        // DavMail inserts an extra space after RFC822.HEADER
+        match parse_response(b"* 4 FETCH (UID 71372 RFC822.HEADER  {10275}\r\n") {
+            IResult::Incomplete(nom::Needed::Size(10320)) => {},
             rsp => panic!("unexpected response {:?}", rsp),
         }
     }
